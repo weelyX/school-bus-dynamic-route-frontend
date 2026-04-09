@@ -1508,14 +1508,15 @@
     document.getElementById("sidebar").classList.add("open");
     document.getElementById("sidebarBackdrop").classList.add("show");
     document.body.classList.add("no-scroll");
+    document.body.classList.add("sidebar-open"); 
   }
 
   function closeSidebar() {
     document.getElementById("sidebar").classList.remove("open");
     document.getElementById("sidebarBackdrop").classList.remove("show");
     document.body.classList.remove("no-scroll");
+    document.body.classList.remove("sidebar-open"); 
   }
-
   function selectSchool(schoolId) {
     uiState.selectedSchoolId = schoolId;
     uiState.selectedBusId = null;
