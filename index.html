@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>School Bus Tracking</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="sidebar-backdrop" id="sidebarBackdrop"></div>
+
+    <div class="app-shell">
+      <aside class="sidebar" id="sidebar" aria-hidden="true">
+        <div class="brand-row">
+          <div class="brand-copy">
+            <h1 class="brand-title" data-i18n="appTitle">School Bus Tracking</h1>
+            <p class="brand-subtitle" data-i18n="topbarSubtitle">Live map, attendance, and bus monitoring</p>
+          </div>
+          <button class="icon-btn mobile-only" id="closeSidebarBtn" type="button" aria-label="Close menu">✕</button>
+        </div>
+
+        <nav class="nav-links" aria-label="Primary navigation">
+          <button class="nav-link active" data-view="dashboard" type="button">
+            <span>🗺️</span>
+            <span data-i18n="navDashboard">Map</span>
+          </button>
+          <button class="nav-link" data-view="schools" type="button">
+            <span>🏫</span>
+            <span data-i18n="navSchools">Schools</span>
+          </button>
+          <button class="nav-link" data-view="buses" type="button">
+            <span>🚌</span>
+            <span data-i18n="navBuses">Buses</span>
+          </button>
+          <button class="nav-link" data-view="students" type="button">
+            <span>👨‍🎓</span>
+            <span data-i18n="navStudents">Students</span>
+          </button>
+          <button class="nav-link" data-view="driver" type="button">
+            <span>🧭</span>
+            <span data-i18n="navDriver">Bus Driver</span>
+          </button>
+          <button class="nav-link" data-view="parent" type="button">
+            <span>👪</span>
+            <span data-i18n="navParent">Parent Portal</span>
+          </button>
+          <button class="nav-link" data-view="settings" type="button">
+            <span>⚙️</span>
+            <span data-i18n="navSettings">Settings</span>
+          </button>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="toggle-card compact">
+            <div>
+              <div class="toggle-label" data-i18n="language">Language</div>
+              <div class="toggle-subtext" data-i18n="languageHint">Switch between English and Arabic</div>
+            </div>
+            <button class="toggle-pill" id="languageToggleBtn" type="button">AR</button>
+          </div>
+          <div class="toggle-card compact">
+            <div>
+              <div class="toggle-label" data-i18n="theme">Theme</div>
+              <div class="toggle-subtext" data-i18n="themeHint">Toggle light and dark mode</div>
+            </div>
+            <button class="toggle-pill" id="themeToggleBtn" type="button">🌙</button>
+          </div>
+        </div>
+      </aside>
+
+      <div class="content-shell">
+        <header class="topbar">
+          <div class="topbar-left">
+            <button class="icon-btn mobile-only" id="openSidebarBtn" type="button" aria-label="Open menu">☰</button>
+            <div class="topbar-copy">
+              <div class="topbar-title" data-i18n="appTitle">School Bus Tracking</div>
+              <div class="topbar-subtitle" data-i18n="topbarSubtitle">Live map, attendance, and bus monitoring</div>
+            </div>
+          </div>
+          <div class="topbar-actions desktop-only">
+            <button class="ghost-btn" id="desktopLanguageBtn" type="button">AR</button>
+            <button class="ghost-btn" id="desktopThemeBtn" type="button">🌙</button>
+          </div>
+        </header>
+
+        <main class="main-content">
+          <section class="view active" id="view-dashboard">
+            <div class="stats-grid" id="statsGrid"></div>
+
+            <div class="dashboard-grid">
+              <section class="panel map-panel">
+                <div class="panel-header">
+                  <div>
+                    <h2 data-i18n="liveFleetMap">Map</h2>
+                    <p data-i18n="liveFleetMapHint">Click any bus or school to view details.</p>
+                  </div>
+                </div>
+                <div id="map"></div>
+              </section>
+
+              <aside class="panel details-panel" id="detailsPanel">
+                <div class="empty-state" id="emptyDetailsState">
+                  <div class="empty-state-icon">🧭</div>
+                  <h3 data-i18n="selectItem">Select an item</h3>
+                  <p data-i18n="selectItemHint">Choose a bus or school from the map or lists to view details.</p>
+                </div>
+
+                <div class="school-panel hidden" id="schoolPanelContent">
+                  <div class="bus-header-card">
+                    <div>
+                      <div class="bus-code" id="schoolPanelName">-</div>
+                      <div class="bus-meta" id="schoolPanelAddress">-</div>
+                    </div>
+                    <span class="count-pill" id="schoolBusCountPill">0</span>
+                  </div>
+
+                  <div class="bus-summary-grid">
+                    <div class="summary-item">
+                      <span class="summary-label" data-i18n="linkedBuses">Linked buses</span>
+                      <strong id="schoolLinkedBusCount">0</strong>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label" data-i18n="studentsAssigned">Students</span>
+                      <strong id="schoolStudentCount">0</strong>
+                    </div>
+                  </div>
+
+                  <div class="student-list-header">
+                    <h3 data-i18n="linkedBuses">Linked buses</h3>
+                    <span class="count-pill" id="schoolBusListCount">0</span>
+                  </div>
+                  <div class="cards-list" id="schoolLinkedBusList"></div>
+                </div>
+
+                <div class="bus-panel hidden" id="busPanelContent">
+                  <div class="bus-header-card">
+                    <div>
+                      <div class="bus-code" id="busCodeText">BUS-01</div>
+                      <div class="bus-meta" id="busMetaText"></div>
+                    </div>
+                    <span class="status-badge" id="busHealthBadge">Operational</span>
+                  </div>
+
+                  <div class="bus-summary-grid">
+                    <div class="summary-item">
+                      <span class="summary-label" data-i18n="school">School</span>
+                      <strong id="panelSchoolName">-</strong>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label" data-i18n="lastSeen">Last seen</span>
+                      <strong id="panelLastSeen">-</strong>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label" data-i18n="studentsAssigned">Students</span>
+                      <strong id="panelStudentCount">0</strong>
+                    </div>
+                    <div class="summary-item">
+                      <span class="summary-label" data-i18n="busStatus">Bus status</span>
+                      <strong id="panelBusStatusText">-</strong>
+                    </div>
+                  </div>
+
+                  <div class="action-row action-row-wrap">
+                    <button class="primary-btn danger" id="toggleBusHealthBtn" type="button" data-i18n="markOutOfService">Mark Out of Service</button>
+                    <button class="secondary-btn" id="toggleBusDelayBtn" type="button" data-i18n="markDelayed">Mark Delayed</button>
+                    <button class="secondary-btn" id="centerBusBtn" type="button" data-i18n="centerOnMap">Center on Map</button>
+                  </div>
+
+                  <div class="student-list-header">
+                    <h3 data-i18n="assignedStudents">Assigned Students</h3>
+                    <span class="count-pill" id="assignedCountPill">0</span>
+                  </div>
+                  <div class="student-list" id="panelStudentList"></div>
+                </div>
+              </aside>
+            </div>
+          </section>
+
+          <section class="view" id="view-schools">
+            <div class="split-layout">
+              <section class="panel section-stack">
+                <div class="panel-header">
+                  <div>
+                    <h2 data-i18n="schoolsList">Schools</h2>
+                    <p data-i18n="schoolsListHint">Click a school to see its linked buses and students.</p>
+                  </div>
+                </div>
+                <div class="cards-list" id="schoolsList"></div>
+                <div class="selected-info-card hidden" id="selectedSchoolCard">
+                  <div class="panel-header compact">
+                    <div>
+                      <h3 id="selectedSchoolTitle">-</h3>
+                      <p id="selectedSchoolSubtitle">-</p>
+                    </div>
+                  </div>
+                  <div class="cards-list" id="selectedSchoolBuses"></div>
+                </div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header">
+                  <div>
+                    <h2 data-i18n="addSchool">Add New School</h2>
+                    <p data-i18n="addSchoolHint">Click directly on the map below to choose the school location.</p>
+                  </div>
+                </div>
+                <form class="form-grid" id="schoolForm">
+                  <label>
+                    <span data-i18n="schoolName">School Name</span>
+                    <input type="text" id="schoolNameInput" data-i18n-placeholder="schoolNamePlaceholder" placeholder="Enter school name" required />
+                  </label>
+                  <label>
+                    <span data-i18n="schoolAddress">Address</span>
+                    <input type="text" id="schoolAddressInput" data-i18n-placeholder="schoolAddressPlaceholder" placeholder="Enter school address" required />
+                  </label>
+                  <div class="picker-block">
+                    <div class="picker-header">
+                      <span data-i18n="pickSchoolLocation">Pick school location</span>
+                      <span class="picker-value" id="schoolLocationPreview" data-i18n="noLocationSelected">No location selected</span>
+                    </div>
+                    <div class="picker-map" id="schoolPickerMap"></div>
+                  </div>
+                  <button class="primary-btn" type="submit" data-i18n="saveSchool">Save School</button>
+                </form>
+              </section>
+            </div>
+          </section>
+
+          <section class="view" id="view-buses">
+            <div class="split-layout">
+              <section class="panel">
+                <div class="panel-header">
+                  <div>
+                    <h2 data-i18n="busesList">Buses</h2>
+                    <p data-i18n="busesListHint">Open any bus to inspect driver details, route, and assigned students.</p>
+                  </div>
+                </div>
+                <div class="cards-list" id="busesList"></div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header">
+                  <div>
+                    <h2 data-i18n="addBus">Add New Bus</h2>
+                    <p data-i18n="addBusHint">Choose a school, set driver details, and click the map to define the bus start point.</p>
+                  </div>
+                </div>
+                <form class="form-grid" id="busForm">
+                  <label>
+                    <span data-i18n="busName">Bus Name</span>
+                    <input type="text" id="busNameInput" data-i18n-placeholder="busNamePlaceholder" placeholder="Enter bus name" required />
+                  </label>
+                  <label>
+                    <span data-i18n="busCode">Bus Code</span>
+                    <input type="text" id="busCodeInput" data-i18n-placeholder="busCodePlaceholder" placeholder="Enter bus code" required />
+                  </label>
+                  <label>
+                    <span data-i18n="plateNumber">Plate Number</span>
+                    <input type="text" id="busPlateInput" data-i18n-placeholder="plateNumberPlaceholder" placeholder="Enter plate number" required />
+                  </label>
+                  <label>
+                    <span data-i18n="driverName">Driver Name</span>
+                    <input type="text" id="driverNameInput" data-i18n-placeholder="driverNamePlaceholder" placeholder="Enter driver name" required />
+                  </label>
+                  <label>
+                    <span data-i18n="driverPhone">Driver Phone</span>
+                    <input type="text" id="driverPhoneInput" data-i18n-placeholder="driverPhonePlaceholder" placeholder="Enter phone number" required />
+                  </label>
+                  <label>
+                    <span data-i18n="assignSchool">Assign School</span>
+                    <select id="busSchoolSelect" required></select>
+                  </label>
+                  <div class="picker-block">
+                    <div class="picker-header">
+                      <span data-i18n="pickBusLocation">Pick bus starting location</span>
+                      <span class="picker-value" id="busLocationPreview" data-i18n="noLocationSelected">No location selected</span>
+                    </div>
+                    <div class="picker-map" id="busPickerMap"></div>
+                  </div>
+                  <button class="primary-btn" type="submit" data-i18n="saveBus">Save Bus</button>
+                </form>
+              </section>
+            </div>
+          </section>
+
+          <section class="view" id="view-students">
+            <div class="split-layout">
+              <section class="panel">
+                <div class="panel-header">
+                  <div>
+                    <h2 data-i18n="studentsList">Students</h2>
+                    <p data-i18n="studentsListHint">Add students, assign them to buses, and keep the data in localStorage.</p>
+                  </div>
+                </div>
+                <div class="table-wrap">
+                  <table class="data-table">
+                    <thead>
+                      <tr>
+                        <th data-i18n="student">Student</th>
+                        <th data-i18n="school">School</th>
+                        <th data-i18n="bus">Bus</th>
+                        <th data-i18n="attendance">Attendance</th>
+                        <th data-i18n="boarding">Boarding</th>
+                      </tr>
+                    </thead>
+                    <tbody id="studentsTableBody"></tbody>
+                  </table>
+                </div>
+                <div class="student-list mobile-students-list" id="studentsMobileList"></div>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header">
+                  <div>
+                    <h2 data-i18n="addStudent">Add New Student</h2>
+                    <p data-i18n="addStudentHint">Click directly on the map below to choose the student's home location.</p>
+                  </div>
+                </div>
+                <form class="form-grid" id="studentForm">
+                  <label>
+                    <span data-i18n="studentName">Student Name</span>
+                    <input type="text" id="studentNameInput" data-i18n-placeholder="studentNamePlaceholder" placeholder="Enter student name" required />
+                  </label>
+                  <label>
+                    <span data-i18n="grade">Grade</span>
+                    <input type="text" id="studentGradeInput" data-i18n-placeholder="gradePlaceholder" placeholder="Enter grade" required />
+                  </label>
+                  <label>
+                    <span data-i18n="pickupAddress">Pickup Address</span>
+                    <input type="text" id="studentAddressInput" data-i18n-placeholder="pickupAddressPlaceholder" placeholder="Enter pickup address" required />
+                  </label>
+                  <label>
+                    <span data-i18n="assignSchool">Assign School</span>
+                    <select id="studentSchoolSelect" required></select>
+                  </label>
+                  <label>
+                    <span data-i18n="assignBus">Assign Bus</span>
+                    <select id="studentBusSelect" required></select>
+                  </label>
+                  <div class="picker-block">
+                    <div class="picker-header">
+                      <span data-i18n="pickStudentLocation">Pick student home location</span>
+                      <span class="picker-value" id="studentLocationPreview" data-i18n="noLocationSelected">No location selected</span>
+                    </div>
+                    <div class="picker-map" id="studentPickerMap"></div>
+                  </div>
+                  <button class="primary-btn" type="submit" data-i18n="saveStudent">Save Student</button>
+                </form>
+              </section>
+            </div>
+          </section>
+
+          <section class="view" id="view-driver">
+            <div class="dashboard-grid driver-layout">
+              <section class="panel map-panel">
+                <div class="panel-header">
+                  <div>
+                    <h2 data-i18n="driverMap">Driver Route Map</h2>
+                    <p data-i18n="driverMapHint">View all assigned students, route order, and customize marker colors.</p>
+                  </div>
+                </div>
+                <div class="driver-toolbar">
+                  <label>
+                    <span data-i18n="selectBus">Select Bus</span>
+                    <select id="driverBusSelect"></select>
+                  </label>
+                </div>
+                <div id="driverMap"></div>
+              </section>
+
+              <aside class="panel details-panel driver-side-panel">
+                <div class="panel-header compact">
+                  <div>
+                    <h3 data-i18n="routeOverview">Route Overview</h3>
+                    <p data-i18n="routeOverviewHint">The bus route updates automatically when students are added.</p>
+                  </div>
+                </div>
+                <div class="bus-summary-grid" id="driverBusSummary"></div>
+                <div class="student-list-header">
+                  <h3 data-i18n="driverStops">Student Stops</h3>
+                  <span class="count-pill" id="driverStopsCount">0</span>
+                </div>
+                <div class="student-list" id="driverStudentMarkerControls"></div>
+              </aside>
+            </div>
+          </section>
+
+          <section class="view" id="view-parent">
+            <div class="parent-portal-layout">
+              <section class="panel parent-top-panel">
+                <div class="panel-header compact">
+                  <div>
+                    <h2 data-i18n="parentPortal">Parent Portal</h2>
+                    <p data-i18n="parentPortalHint">Track the bus in real time from home to school and back again.</p>
+                  </div>
+                </div>
+                <div class="parent-controls">
+                  <label>
+                    <span data-i18n="selectStudent">Select Student</span>
+                    <select id="parentStudentSelect"></select>
+                  </label>
+                  <div class="status-chip-row" id="parentStatusChips"></div>
+                </div>
+              </section>
+
+              <div class="dashboard-grid parent-main-grid">
+                <section class="panel map-panel">
+                  <div id="parentPortalMap"></div>
+                </section>
+                <aside class="parent-side-column">
+                  <section class="panel">
+                    <div class="panel-header compact">
+                      <div>
+                        <h3 data-i18n="driverInformation">Driver Information</h3>
+                        <p data-i18n="driverInformationHint">View-only details for the assigned bus driver.</p>
+                      </div>
+                    </div>
+                    <div class="info-card-grid" id="driverInfoCard"></div>
+                  </section>
+                  <section class="panel">
+                    <div class="panel-header compact">
+                      <div>
+                        <h3 data-i18n="routeOverview">Route Overview</h3>
+                        <p data-i18n="routeOverviewHint">Monitor the trip between home and school with live map updates.</p>
+                      </div>
+                    </div>
+                    <div class="info-card-grid" id="routeInfoCard"></div>
+                    <div class="alert-banner hidden" id="parentAlertBanner"></div>
+                  </section>
+                </aside>
+              </div>
+            </div>
+          </section>
+
+          <section class="view" id="view-settings">
+            <div class="settings-grid">
+              <section class="panel">
+                <div class="panel-header">
+                  <div>
+                    <h2 data-i18n="accountSettings">Account Settings</h2>
+                    <p data-i18n="accountSettingsHint">Update your local profile, language, and theme preferences.</p>
+                  </div>
+                </div>
+                <form class="form-grid" id="settingsForm">
+                  <label>
+                    <span data-i18n="fullName">Full Name</span>
+                    <input type="text" id="profileNameInput" required />
+                  </label>
+                  <label>
+                    <span data-i18n="email">Email</span>
+                    <input type="email" id="profileEmailInput" required />
+                  </label>
+                  <label>
+                    <span data-i18n="phone">Phone</span>
+                    <input type="text" id="profilePhoneInput" required />
+                  </label>
+                  <label>
+                    <span data-i18n="languagePreference">Language Preference</span>
+                    <select id="settingsLanguageSelect">
+                      <option value="en">English</option>
+                      <option value="ar">العربية</option>
+                    </select>
+                  </label>
+                  <label>
+                    <span data-i18n="themePreference">Theme Preference</span>
+                    <select id="settingsThemeSelect">
+                      <option value="light">Light</option>
+                      <option value="dark">Dark</option>
+                    </select>
+                  </label>
+                  <label class="switch-row">
+                    <span>
+                      <span class="switch-label" data-i18n="notifications">Notifications</span>
+                      <span class="toggle-subtext" data-i18n="notificationsHint">Simulated preference stored in the browser</span>
+                    </span>
+                    <input type="checkbox" id="notificationsToggle" />
+                  </label>
+                  <div class="action-row action-row-wrap">
+                    <button class="secondary-btn" id="settingsLanguageQuickBtn" type="button" data-i18n="changeLanguageAction">Toggle Language</button>
+                    <button class="secondary-btn" id="settingsThemeQuickBtn" type="button" data-i18n="changeThemeAction">Toggle Theme</button>
+                  </div>
+                  <button class="primary-btn" type="submit" data-i18n="saveSettings">Save Settings</button>
+                </form>
+              </section>
+
+              <section class="panel">
+                <div class="panel-header">
+                  <div>
+                    <h2 data-i18n="systemTools">System Tools</h2>
+                    <p data-i18n="systemToolsHint">Reset the simulated data while keeping the standalone setup intact.</p>
+                  </div>
+                </div>
+                <button class="secondary-btn full-width" id="resetDemoBtn" type="button" data-i18n="resetDemo">Reset Demo Data</button>
+              </section>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <div class="toast" id="toast"></div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="./mock-data.js"></script>
+    <script src="./app.js"></script>
+  </body>
+</html>
