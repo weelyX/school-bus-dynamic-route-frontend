@@ -944,3 +944,101 @@ input[type="color"] {
     bottom: 16px;
   }
 }
+
+@media (max-width: 900px) {
+  /* 1) Make the mobile sidebar fully opaque so the map cannot show through it */
+  .sidebar {
+    background: var(--surface-strong) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    opacity: 1;
+    z-index: 4000 !important;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior: contain;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+  }
+
+  /* 2) Backdrop must sit above the page and below the sidebar */
+  .sidebar-backdrop {
+    z-index: 3900 !important;
+    background: rgba(2, 8, 23, 0.62) !important;
+  }
+
+  /* 3) Keep all page/map layers below the sidebar */
+  .content-shell,
+  .main-content,
+  .dashboard-grid,
+  .map-panel,
+  #map,
+  .picker-map,
+  .leaflet-container,
+  .leaflet-pane,
+  .leaflet-top,
+  .leaflet-bottom,
+  .leaflet-control-container,
+  .leaflet-popup-pane,
+  .leaflet-marker-pane,
+  .leaflet-overlay-pane {
+    z-index: 1 !important;
+  }
+
+  /* 4) When menu is open, disable pointer-events on the page/map so links become clickable */
+  body.sidebar-open .content-shell,
+  body.sidebar-open .main-content,
+  body.sidebar-open #map,
+  body.sidebar-open .picker-map,
+  body.sidebar-open .leaflet-container,
+  body.sidebar-open .leaflet-pane,
+  body.sidebar-open .leaflet-top,
+  body.sidebar-open .leaflet-bottom,
+  body.sidebar-open .leaflet-control-container,
+  body.sidebar-open .leaflet-popup-pane,
+  body.sidebar-open .leaflet-marker-pane,
+  body.sidebar-open .leaflet-overlay-pane {
+    pointer-events: none !important;
+  }
+
+  /* 5) Re-enable interaction only for the sidebar + backdrop */
+  body.sidebar-open .sidebar,
+  body.sidebar-open .sidebar *,
+  body.sidebar-open .sidebar-backdrop {
+    pointer-events: auto !important;
+  }
+
+  /* 6) Ensure menu items are genuinely tappable */
+  .sidebar.open .nav-links,
+  .sidebar.open .nav-link,
+  .sidebar.open .nav-link *,
+  .sidebar.open .sidebar-footer,
+  .sidebar.open .toggle-card,
+  .sidebar.open .toggle-pill,
+  .sidebar.open .icon-btn,
+  .sidebar.open button,
+  .sidebar.open a {
+    pointer-events: auto !important;
+    position: relative;
+    z-index: 2;
+    touch-action: manipulation;
+  }
+
+  /* 7) Prevent any hidden sliver or transform glitch from interfering */
+  .sidebar {
+    left: 0;
+    right: auto;
+    transform: translate3d(calc(-100% - 32px), 0, 0);
+  }
+
+  html[dir="rtl"] .sidebar {
+    left: auto;
+    right: 0;
+    transform: translate3d(calc(100% + 32px), 0, 0);
+  }
+
+  .sidebar.open,
+  html[dir="rtl"] .sidebar.open {
+    transform: translate3d(0, 0, 0) !important;
+    visibility: visible !important;
+    pointer-events: auto !important;
+  }
+}
