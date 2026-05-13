@@ -44,7 +44,11 @@ The system uses static frontend technologies and browser-based storage to simula
 
 ## Live Demo
 
-The project can be deployed using GitHub Pages because it is built with static frontend files.
+You can view the live static demo here:
+
+[View Live Demo](https://weelyx.github.io/school-bus-dynamic-route-frontend/)
+
+> Note: This project is a frontend prototype that uses mock data and browser storage to simulate backend behavior.
 
 > Note: This project uses local mock data and browser storage to simulate backend behavior.
 
